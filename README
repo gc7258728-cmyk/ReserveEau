@@ -1,0 +1,321 @@
+RESERVEEAU 1.0
+Application pédagogique de bilan d'eau pour un bâtiment
+======================================================
+
+1. Installation Windows
+-----------------------
+Ouvrir ce dossier dans VS Code, puis son terminal PowerShell.
+Python 3.11 à 3.14 conseillé. Connexion Internet nécessaire à l'installation
+des bibliothèques, pas au calcul lui-même.
+
+    python -m pip install -r requirement.text
+    python -m streamlit run app.py
+
+Si le port proposé est occupé :
+
+    python -m streamlit run app.py --server.port 8534
+
+Les trois seuls fichiers à livrer sont app.py, requirement.text et README.
+Ne pas ajouter de données, d'environnement virtuel, de tests ou de captures
+dans ce dossier. Toutes les ressources nécessaires sont intégrées à app.py.
+Aucune clé API, aucun compte et aucun mot de passe ne sont nécessaires.
+
+2. Bibliothèques
+-----------------
+streamlit : interface, formulaires, navigation, session et téléchargements.
+numpy : bilans numériques, générateur aléatoire, quantiles et trajectoires.
+pandas : tableaux, CSV et classeur Excel.
+plotly : graphiques interactifs, bandes de quantiles et diagrammes.
+scipy : intervalle binomial exact sur une probabilité simulée.
+reportlab : rapport PDF paginé, tableaux et courbe vectorielle.
+openpyxl : moteur d'écriture Excel, feuilles et types de cellules.
+Bibliothèques standard : validation, JSON, dates, copie et buffers mémoire.
+
+3. Principe et espaces
+----------------------
+Question : combien de jours le volume disponible permet-il de satisfaire la
+demande d'un bâtiment, avec ou sans réapprovisionnement ?
+
+L'application s'ouvre directement sur les résultats d'un scénario initial
+modifiable. Ses valeurs sont des hypothèses personnelles, pas des mesures.
+L'exemple fictif est activable par un bouton ; son espace reste séparé de
+« Mon scénario ». Charger à nouveau l'exemple réinitialise uniquement cet
+espace fictif. Aucune donnée n'est mélangée automatiquement.
+
+IMPORTANT : toutes les données restent dans la session du navigateur.
+Fermer la session, actualiser la connexion ou arrêter le serveur peut perdre
+les saisies. Le JSON constitue la sauvegarde portable à conserver hors du
+dossier livré. Il n'y a pas de base en ligne ni de persistance automatique.
+Chaque onglet peut avoir sa propre session. Aucun partage de données entre
+utilisateurs n'est prévu. Les simulations mises en cache sont calculées
+localement ; le cache ne constitue pas une sauvegarde.
+
+4. Rubriques
+-------------
+TABLEAU DE BORD
+- Volume initial, demande quotidienne, autonomie sans apport, premier manque.
+- Cuve schématique : curseur J0 à la fin du dernier jour.
+- Courbe des fins de journée, seuil d'alerte et bilan des volumes.
+- Liste des livraisons du scénario.
+
+MON SCENARIO
+- Nom, capacité (L), volume initial (L), occupants et consommation (L/pers./j).
+- Date initiale, durée (1 à 180 jours), seuil (pourcentage de capacité).
+- Minimum et maximum pour la loi triangulaire ; son mode est la consommation
+  habituelle du bilan déterministe.
+- Enregistrer applique toutes les valeurs d'un seul coup.
+- Si un nouveau terme rend une livraison existante hors horizon, la saisie
+  est refusée : modifier d'abord le plan de livraison.
+
+BILAN QUOTIDIEN
+- Détail : début, apport, débordement, demande, eau servie, manque et fin.
+- Diagramme eau servie/manque et export CSV.
+- Un stock final nul n'implique pas que la journée a manqué d'eau.
+
+COMPARER LES CUVES
+- Cuve du scénario et deux alternatives.
+- Même taux de remplissage : plus grande capacité = plus d'eau initiale.
+- Même volume initial : aucune eau supplémentaire au départ ; une capacité
+  plus faible que ce volume est refusée, jamais tronquée silencieusement.
+- Occupants, consommation, dates et livraisons restent identiques.
+- Comparaison déterministe, sans prix ni coût inventé.
+
+CONSOMMATION ET RISQUES
+- 1 000, 5 000, 10 000 ou 20 000 trajectoires ; graine reproductible.
+- Probabilité d'au moins un jour avec manque sur tout l'horizon.
+- Taux de journées entièrement servies (toutes les journées simulées).
+- Médiane et quantiles ponctuels Q05/Q95 des niveaux.
+- Probabilité de manque par jour, manque médian cumulé, CSV des simulations.
+- Sensibilité déterministe avec consommation et capacité à +/-10 %.
+  Une hypothèse varie à la fois. Taux de remplissage initial conservé lors
+  d'une variation de capacité. Une perturbation hors bornes est omise.
+
+REAPPROVISIONNEMENTS
+- Ajouter une livraison (jour entier, volume strictement positif en L).
+- Les apports d'un même jour sont regroupés.
+- Modifier, ajouter ou supprimer des lignes dans le tableau, puis enregistrer.
+- CSV : remplacement explicite, après confirmation ; import atomique.
+- Plan régulier : première livraison, intervalle, volume ; évaluer avant
+  d'appliquer. L'application du plan REMPLACE les anciennes livraisons.
+- Les livraisons sont certaines et arrivent au début du jour indiqué.
+
+RAPPORTS ET SAUVEGARDES
+- PDF : hypothèses, bilan, courbe vectorielle, toutes les lignes et limites.
+- Excel : Hypotheses, Bilan quotidien, Livraisons.
+- CSV du bilan ; JSON complet du scénario (pas du résultat Monte-Carlo).
+- Toute modification invalide les anciens rapports et simulations.
+- Restauration JSON : remplace seulement l'espace sélectionné, avec accord.
+- Les champs texte sont échappés pour le HTML/PDF. Les cellules Excel sont
+  écrites comme texte, non comme formules ; le CSV protège les préfixes de
+  formules avec une apostrophe. Aucune formule reçue n'est exécutée.
+
+METHODE ET TESTS
+- Formules, hypothèses, limites et exemples de vérification dans l'app.
+
+5. Formules et unités
+---------------------
+N = nombre d'occupants ; q = consommation par personne, en L/pers./jour.
+C = capacité ; V0 = stock au début du jour ; A = livraison du jour, en L.
+
+    Demande D = N x q
+    Débordement B = max(V0 + A - C, 0)
+    Disponible U = min(C, V0 + A)
+    Eau servie E = min(D, U)
+    Manque M = D - E
+    Stock final V1 = U - E
+
+Deux identités à vérifier :
+    V0 + A = V1 + E + B
+    D = E + M
+
+Le stock final devient le stock de début du jour suivant. Le manque n'est
+pas reporté au lendemain. La livraison précède la consommation : elle peut
+déborder alors que la consommation prévue aurait libéré de la place plus
+tard dans la journée. Le modèle ne suit pas les heures.
+
+Autonomie sans apport = volume INITIAL / demande quotidienne constante.
+Il s'agit d'une durée théorique fractionnaire, non de la date exacte d'une
+panne. Pour une demande nulle, le modèle ne prévoit pas d'épuisement.
+Le seuil d'alerte est strict : stock final < capacité x seuil / 100.
+Ce seuil est un choix utilisateur, pas une valeur réglementaire.
+
+6. Modèle probabiliste
+-----------------------
+Pour chaque trajectoire et chaque jour, tirer q dans une loi triangulaire :
+minimum a, valeur habituelle m (mode), maximum b, avec 0 <= a <= m <= b.
+Si a = m = b, la consommation est constante, sans erreur de calcul.
+Moyenne théorique : (a + m + b) / 3. Le mode n'est pas toujours la moyenne.
+Un tirage représente la consommation moyenne par personne du bâtiment ce
+jour-là, multipliée par N. Il ne représente PAS N tirages indépendants.
+Les jours et les trajectoires sont supposés indépendants.
+Les livraisons, les occupants et la capacité ne sont pas aléatoires.
+
+Pf = nombre de trajectoires avec au moins un manque / nombre de trajectoires.
+Taux de service journalier = nombre de journées avec demande entièrement
+satisfaite / nombre total de journées simulées. Ce n'est PAS 1 - Pf.
+
+Un intervalle binomial exact à 95 % accompagne Pf, même pour 0 % ou 100 %.
+Il décrit l'erreur Monte-Carlo, pas l'incertitude sur les hypothèses ou les
+livraisons. Une probabilité simulée n'est pas une fréquence observée.
+La bande Q05-Q95 est ponctuelle par jour, pas une enveloppe garantissant
+90 % des trajectoires complètes. Une graine identique et des paramètres
+identiques reproduisent les résultats avec les versions testées.
+CSV : premier_jour_manque vide signifie aucun manque dans l'horizon.
+Les volumes CSV ont 6 décimales ; l'interface peut afficher des arrondis.
+
+7. Tests de prise en main (toutes données fictives)
+--------------------------------------------------
+Test A : cliquer sur Charger l'exemple fictif, sans ajouter de livraison.
+Capacité = initial = 3 000 L ; N=10 ; q=50 ; durée=14 jours.
+Attendus : demande 500 L/j, autonomie 6 jours ; stocks J1=2 500, J2=2 000,
+J3=1 500, J4=1 000, J5=500, J6=0, J7=0. La journée J6 est entièrement
+servie. Le premier manque est J7. Six journées couvertes, huit avec manque.
+Demande totale 7 000 L ; servie 3 000 L ; manque 4 000 L ; débordement 0.
+Avec seuil 20 % (=600 L), la première fin de jour sous seuil est J5.
+
+Test B : exemple + livraison de 1 000 L au début de J3.
+J3 commence à 2 000 L, reçoit 1 000 L, sert 500 L et finit à 2 500 L.
+Premier manque J9, huit journées couvertes, manque total 3 000 L, débordement 0.
+
+Test C : réinitialiser l'exemple, livrer 1 000 L au début de J1.
+Cuve pleine : débordement 1 000 L, eau servie 500 L, fin J1=2 500 L.
+Premier manque reste J7. La livraison n'a pas accru le stock utile.
+
+Test D : exemple sans livraison ; comparer cuves pleines 3 000/5 000/7 000 L,
+mode Même taux de remplissage.
+Journées couvertes : 6/10/14. Premiers manques : J7/J11/aucun sur 14 jours.
+Manques cumulés : 4 000/2 000/0 L. Toutes finissent à zéro.
+Mode Même volume initial : les trois commencent à 3 000 L ; sans apport,
+les trajectoires sont identiques (premier manque J7).
+
+Test E : exemple sans apport ; Mon scénario : minimum=habituelle=maximum=50.
+Simuler 10 000 trajectoires, graine42. Toutes donnent premier manque J7,
+manque4 000 L et fin0. Pf=100 %. Journées entièrement servies=6/14=42,857 %.
+L'intervalle exact n'est pas [100 %, 100 %], même avec des tirages constants.
+Le modèle étant déterministe dans ce cas, sa probabilité est connue exactement ;
+l'intervalle affiché est l'intervalle binomial générique du compteur.
+
+Test F : exemple sans apport ; Réapprovisionnements, première J4, intervalle3,
+volume1 500 L. Évaluer puis appliquer.
+Livraisons J4,J7,J10,J13 : 6 000 L apportés, 7 000 L servis ; aucun manque,
+aucun débordement ; volume final2 000 L. Le plan ancien est remplacé.
+
+Test probabiliste non constant : reprendre l'exemple, réduire la durée à
+6 jours, conserver minimum40, habituelle50, maximum60 ; 10 000 tirages,
+graine42. Dans l'environnement testé : risque d'au moins un manque50,27 %,
+intervalle exact à95 % environ[49,285 % ; 51,255 %], journées entièrement
+servies91,622 %. Le risque concerne principalement J6 ; les cinq premières
+journées restent couvertes avec ces bornes. Les arrondis peuvent varier
+avec les versions des bibliothèques. Il s'agit de scénarios simulés.
+
+Test G : refuser initial4 000 L dans une cuve3 000 L, ou minimum60 lorsque
+habituelle50. Les valeurs enregistrées doivent rester inchangées.
+Test H : après une saisie, changer de rubrique puis revenir ; les paramètres
+enregistrés restent présents. Changer d'espace n'écrase pas l'autre espace.
+Test I : exporter PDF/Excel/CSV/JSON ; comparer le bilan des quatre fichiers.
+Restaurer le JSON dans l'espace souhaité après confirmation. Vérifier que
+l'autre espace reste inchangé. Les résultats Monte-Carlo doivent être relancés.
+
+CSV de livraison (UTF-8, séparateur point-virgule ou virgule) :
+
+    jour;volume_l
+    3;1000
+    6;1000
+
+Les jours doivent être dans l'horizon et les volumes strictement positifs.
+Les décimales utilisent un point. Colonnes supplémentaires refusées.
+Limites : 180 lignes, CSV1Mo, JSON100Ko, volumes10 000 000 L,
+10 000 occupants, consommation1 000 L/pers./j, durée180 jours.
+
+8. Limites et portée
+--------------------
+Outil de compréhension et de comparaison, pas une validation professionnelle.
+Aucune norme ni consommation locale n'est supposée. Les valeurs par défaut
+sont fictives. Pas de bilan horaire, de pression, de pompe, de pertes par
+fuite ou évaporation, de traitement d'eau ou de volume incendie réservé.
+Pas d'étude de potabilité, de dimensionnement réglementaire ou de prévision
+garantie. Si les livraisons sont tardives ou corrélées à la demande, le modèle
+doit être adapté avant toute interprétation hors d'un devoir pédagogique.
+L'application ne déduit jamais une conformité réelle d'une probabilité.
+
+9. GitHub et Streamlit Community Cloud
+--------------------------------------
+Le fichier local demandé est requirement.text : il n'est pas renommé ici.
+Streamlit Community Cloud attend le nom standard requirements.txt.
+Préparer une COPIE DE DEPLOIEMENT hors du dossier livré. Dans PowerShell,
+depuis le dossier reserveeau (adapter le chemin de destination si nécessaire) :
+
+    $dest = Join-Path $HOME 'Documents\Codex\deploiements\reserveeau'
+    New-Item -ItemType Directory -Path $dest -Force
+    Copy-Item -LiteralPath .\app.py -Destination $dest
+    Copy-Item -LiteralPath .\README -Destination $dest
+    Copy-Item -LiteralPath .\requirement.text -Destination (Join-Path $dest 'requirements.txt')
+    Set-Location -LiteralPath $dest
+
+Créer sur GitHub un dépôt reserveeau, vide si utilisation des commandes
+suivantes. Dans la copie de déploiement uniquement :
+
+    git init
+    git add .
+    git commit -m "Premiere version de ReserveEau"
+    git branch -M main
+    git remote add origin https://github.com/VOTRE_COMPTE/reserveeau.git
+    git remote -v
+    git push -u origin main
+
+Remplacer VOTRE_COMPTE par le véritable compte. Si origin existe déjà,
+vérifier sa destination puis utiliser git remote set-url origin URL_DU_DEPOT.
+Ne pas initialiser le dépôt parent contenant toutes les autres applications.
+On peut aussi téléverser app.py, requirements.txt et README directement
+dans un dépôt via l'interface GitHub.
+
+Dans Streamlit Community Cloud : créer une app, choisir le dépôt, main,
+et le fichier d'entrée app.py. Si Paste URL est proposé, fournir l'URL DU
+FICHIER, par exemple :
+https://github.com/VOTRE_COMPTE/reserveeau/blob/main/app.py
+et non uniquement celle du dépôt. Choisir une version Python compatible.
+Aucun secret ni fichier de base de données n'est à configurer.
+Consulter les journaux si une bibliothèque manque : vérifier le nom exact
+requirements.txt et sa présence dans la branche réellement déployée.
+Le lien public est fourni après déploiement ; aucun lien n'est inventé ici.
+
+Après modification : mettre à jour les fichiers de la copie de déploiement,
+puis, dans cette copie :
+
+    git status
+    git add .
+    git commit -m "Mise a jour de ReserveEau"
+    git push
+
+Ne pas conserver deux noms différents pour le même fichier Python dans
+le dépôt. Refaire les tests avant d'envoyer. Le dossier original reste avec
+exactement les trois fichiers demandés.
+
+10. Vérification de livraison (23 octobre 2026)
+-----------------------------
+Les tests, captures et archives sont placés hors du dossier livré.
+Le bilan conserve les masses ; les livraisons sont appliquées avant la demande.
+Les contrôles de bornes et de données non finies sont côté Python également.
+46 tests automatisés réussis : calculs, validation, import, simulation,
+conservation des volumes, navigation, formulaires et exports.
+Parcours navigateur vérifiés à1440,768,390 et320 pixels : niveaux de cuve,
+changement d'espace, paramètres, comparaison, simulation, ajout de livraison,
+plan régulier, téléchargement PDF/Excel/CSV/JSON et restauration JSON.
+PDF standard2pages et cas long180jours7pages rendus puis contrôlés visuellement.
+Exports téléchargés relus : mêmes résultats que les calculs, 3feuilles Excel,
+10 000 lignes de simulation et scénario JSON cohérent.
+Test de charge : 20 000 trajectoires sur180jours, résultats finis sans erreur.
+Environnement testé : Python3.14, Streamlit1.65.0, NumPy2.5.3, pandas3.0.6,
+Plotly7.1.0, SciPy1.18.1, ReportLab4.5.1 et openpyxl3.1.5.
+Un avertissement de permissions Windows peut apparaître au nettoyage des
+dossiers temporaires du lanceur de tests après OK ; les tests réussissent,
+et le serveur de l'application ne présente pas cette erreur.
+La compatibilité n'a pas été exécutée sur tous les navigateurs ou versions
+de Python : tests de rendu effectués avec Edge/Chromium sur Windows.
+Le déploiement sur un compte GitHub/Cloud, qui nécessite son propriétaire,
+reste à effectuer. Une validation réglementaire ou professionnelle n'a pas
+été réalisée et n'est pas l'objet de cet outil.
+
+Sources officielles pour le déploiement :
+https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/app-dependencies
+https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy
