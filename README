@@ -1,321 +1,342 @@
-RESERVEEAU 1.0
-Application pédagogique de bilan d'eau pour un bâtiment
-======================================================
+HABITAT'ELLES 1.0 — COLLECTER, PRIORISER, SUIVRE
+==============================================
 
-1. Installation Windows
------------------------
-Ouvrir ce dossier dans VS Code, puis son terminal PowerShell.
-Python 3.11 à 3.14 conseillé. Connexion Internet nécessaire à l'installation
-des bibliothèques, pas au calcul lui-même.
+Prototype pédagogique de collecte mobile sur l'état des logements occupés par
+des femmes et les besoins de réhabilitation. Interface française responsive,
+utilisable dans un navigateur CONNECTÉ au serveur Streamlit.
+Le prototype n'est pas une application native Android/iOS ni une collecte
+entièrement hors ligne. Il n'émet pas de diagnostic de sécurité structurelle.
 
-    python -m pip install -r requirement.text
-    python -m streamlit run app.py
+Le dossier livré contient uniquement :
+  app.py              fonctions, style, illustration, données fictives et exports
+  requirement.text    bibliothèques
+  README              guide d'installation, méthode, tests et limites
+Les tests, captures et archives restent hors de ce dossier. Aucun secret requis.
 
-Si le port proposé est occupé :
+1. INSTALLER ET LANCER SOUS WINDOWS
+-----------------------------------
+Python 3.12 à 3.14 conseillé. Ouvrir ce dossier dans VS Code, puis le terminal :
 
-    python -m streamlit run app.py --server.port 8534
+  python -m pip install -r requirement.text
+  python -m streamlit run app.py
 
-Les trois seuls fichiers à livrer sont app.py, requirement.text et README.
-Ne pas ajouter de données, d'environnement virtuel, de tests ou de captures
-dans ce dossier. Toutes les ressources nécessaires sont intégrées à app.py.
-Aucune clé API, aucun compte et aucun mot de passe ne sont nécessaires.
+Pour consulter depuis un téléphone sur le même réseau local, utiliser l'adresse
+Network URL affichée par Streamlit, avec l'ordinateur et le serveur accessibles.
+localhost sur le téléphone désigne le téléphone lui-même. Après hébergement,
+utiliser le lien public de l'application dans le navigateur du téléphone.
 
-2. Bibliothèques
------------------
-streamlit : interface, formulaires, navigation, session et téléchargements.
-numpy : bilans numériques, générateur aléatoire, quantiles et trajectoires.
-pandas : tableaux, CSV et classeur Excel.
-plotly : graphiques interactifs, bandes de quantiles et diagrammes.
-scipy : intervalle binomial exact sur une probabilité simulée.
-reportlab : rapport PDF paginé, tableaux et courbe vectorielle.
-openpyxl : moteur d'écriture Excel, feuilles et types de cellules.
-Bibliothèques standard : validation, JSON, dates, copie et buffers mémoire.
+Pour retrouver les couleurs natives de la livraison :
 
-3. Principe et espaces
-----------------------
-Question : combien de jours le volume disponible permet-il de satisfaire la
-demande d'un bâtiment, avec ou sans réapprovisionnement ?
+  python -m streamlit run app.py --theme.base light --theme.primaryColor "#236757" --theme.backgroundColor "#F5F7F0" --theme.secondaryBackgroundColor "#E6ECDC" --theme.textColor "#233D35" --theme.sidebar.backgroundColor "#FBFCF6" --theme.sidebar.secondaryBackgroundColor "#E2ECDF" --theme.sidebar.textColor "#24483D"
 
-L'application s'ouvre directement sur les résultats d'un scénario initial
-modifiable. Ses valeurs sont des hypothèses personnelles, pas des mesures.
-L'exemple fictif est activable par un bouton ; son espace reste séparé de
-« Mon scénario ». Charger à nouveau l'exemple réinitialise uniquement cet
-espace fictif. Aucune donnée n'est mélangée automatiquement.
+Bibliothèques :
+  streamlit : formulaires, navigation, images, caméra du navigateur, carte et session.
+  pandas : tableaux, statistiques, imports et exports.
+  numpy : simulations probabilistes et quantiles.
+  plotly : graphiques interactifs.
+  openpyxl : lecture et écriture Excel, cellules textuelles explicites.
+  reportlab : rapports PDF paginés et police embarquée.
+  pillow : orientation, réduction et réencodage des photos sans EXIF.
+Les autres imports sont fournis par Python. Pas de clé API ni de service payant.
+Les fonds cartographiques nécessitent une connexion externe ; le tableau des
+quartiers reste utilisable sans chargement de carte. Les versions transitives
+ne sont pas toutes verrouillées par ces intervalles de dépendances.
 
-IMPORTANT : toutes les données restent dans la session du navigateur.
-Fermer la session, actualiser la connexion ou arrêter le serveur peut perdre
-les saisies. Le JSON constitue la sauvegarde portable à conserver hors du
-dossier livré. Il n'y a pas de base en ligne ni de persistance automatique.
-Chaque onglet peut avoir sa propre session. Aucun partage de données entre
-utilisateurs n'est prévu. Les simulations mises en cache sont calculées
-localement ; le cache ne constitue pas une sauvegarde.
+2. DÉMARRER ET CONSERVER SON ENQUÊTE
+------------------------------------
+Le premier écran ouvre une démonstration ENTIÈREMENT FICTIVE : 30 logements,
+32 visites, trois quartiers aux noms fictifs, six interventions et aucune photo.
+Les points de quartiers sont des positions approximatives de démonstration,
+pas des logements réels. L'illustration de maison est un dessin, pas une preuve.
 
-4. Rubriques
--------------
-TABLEAU DE BORD
-- Volume initial, demande quotidienne, autonomie sans apport, premier manque.
-- Cuve schématique : curseur J0 à la fin du dernier jour.
-- Courbe des fins de journée, seuil d'alerte et bilan des volumes.
-- Liste des livraisons du scénario.
+« Revenir à mon enquête » ouvre un espace personnel initialement vide. Les deux
+espaces sont distincts. Une session ne lit pas un registre commun aux visiteurs.
+Les données sont en mémoire de session : fermeture/reconnexion peut les perdre.
+Télécharger la sauvegarde JSON dans Rapports > Données détaillées pour conserver
+le projet, photos comprises. Aucune base de données durable n'est créée ici.
+Une vraie collecte multi-enquêteurs demande un stockage durable, des accès
+appropriés et une organisation de terrain distincts de cette démonstration.
 
-MON SCENARIO
-- Nom, capacité (L), volume initial (L), occupants et consommation (L/pers./j).
-- Date initiale, durée (1 à 180 jours), seuil (pourcentage de capacité).
-- Minimum et maximum pour la loi triangulaire ; son mode est la consommation
-  habituelle du bilan déterministe.
-- Enregistrer applique toutes les valeurs d'un seul coup.
-- Si un nouveau terme rend une livraison existante hors horizon, la saisie
-  est refusée : modifier d'abord le plan de livraison.
+Rubriques :
+  Tableau de bord : logements, défauts, manquants, intervalles et carte agrégée.
+  Logements : campagne, quartiers, fiches et historique de visites/photos.
+  Visites : constats, besoins exprimés, imports et photographies autorisées.
+  Besoins : orientations expliquées et sensibilité à la règle d'impact.
+  Interventions : actions, causes supposées, vérifications, réalisation et budget.
+  Rapports : PDF agrégé, fiche détaillée, Excel, JSON et tests guidés.
 
-BILAN QUOTIDIEN
-- Détail : début, apport, débordement, demande, eau servie, manque et fin.
-- Diagramme eau servie/manque et export CSV.
-- Un stock final nul n'implique pas que la journée a manqué d'eau.
+Chaque formulaire s'applique après enregistrement. Une modification invalide
+l'ancienne simulation budgétaire. Les notifications ne déplacent pas les panneaux.
+Les téléchargements ne relancent pas les calculs.
 
-COMPARER LES CUVES
-- Cuve du scénario et deux alternatives.
-- Même taux de remplissage : plus grande capacité = plus d'eau initiale.
-- Même volume initial : aucune eau supplémentaire au départ ; une capacité
-  plus faible que ce volume est refusée, jamais tronquée silencieusement.
-- Occupants, consommation, dates et livraisons restent identiques.
-- Comparaison déterministe, sans prix ni coût inventé.
+3. DONNÉES ET MODÈLE D'ENQUÊTE
+--------------------------------
+Quartier : nom, point approximatif facultatif, source du point.
+Logement : ID HE-0001, repère pseudonymisé, quartier, type, nombre d'occupants
+facultatif (0=non renseigné), accord d'enquête.
+Aucun champ de nom de personne, téléphone, adresse exacte, revenu ou diagnostic
+médical. La situation familiale et le nombre d'occupants ne déterminent pas la priorité.
 
-CONSOMMATION ET RISQUES
-- 1 000, 5 000, 10 000 ou 20 000 trajectoires ; graine reproductible.
-- Probabilité d'au moins un jour avec manque sur tout l'horizon.
-- Taux de journées entièrement servies (toutes les journées simulées).
-- Médiane et quantiles ponctuels Q05/Q95 des niveaux.
-- Probabilité de manque par jour, manque médian cumulé, CSV des simulations.
-- Sensibilité déterministe avec consommation et capacité à +/-10 %.
-  Une hypothèse varie à la fois. Taux de remplissage initial conservé lors
-  d'une variation de capacité. Une perturbation hors bornes est omise.
+Une visite appartient à un logement, avec date, ordre, code enquêteur (ENQ-01...),
+contexte météo, besoin exprimé et contraintes pratiques. Cinq rubriques :
+  murs, toiture, humidité, sols, assainissement.
+Pour chacune :
+  - état : Absent / Présent / Non observé / Information inconnue ;
+  - origine : observation de visite / déclaration de l'occupante / mesure documentée ;
+  - intensité d'impact d'usage : 1 limité, 2 gênant, 3 important, si défaut présent ;
+  - étendue, description, signalement préoccupant et motif si nécessaire.
+L'intensité d'usage n'est pas une note de sécurité. Les fissures ne sont pas
+diagnostiquées automatiquement à partir d'une image ou d'une dimension.
+Un défaut présent exige description et intensité 1 à 3. Les autres états ont
+intensité 0. Un signalement préoccupant exige un défaut présent et un motif.
+Conserver les hypothèses sur les causes comme hypothèses, à vérifier.
 
-REAPPROVISIONNEMENTS
-- Ajouter une livraison (jour entier, volume strictement positif en L).
-- Les apports d'un même jour sont regroupés.
-- Modifier, ajouter ou supprimer des lignes dans le tableau, puis enregistrer.
-- CSV : remplacement explicite, après confirmation ; import atomique.
-- Plan régulier : première livraison, intervalle, volume ; évaluer avant
-  d'appliquer. L'application du plan REMPLACE les anciennes livraisons.
-- Les livraisons sont certaines et arrivent au début du jour indiqué.
+Accord d'enquête requis pour une fiche ; accord distinct pour une photographie.
+Les photos ne doivent montrer ni personnes ni documents identifiants. Le logiciel
+ne détecte pas les visages, ne masque pas leur contenu et ne certifie pas leur anonymat.
 
-RAPPORTS ET SAUVEGARDES
-- PDF : hypothèses, bilan, courbe vectorielle, toutes les lignes et limites.
-- Excel : Hypotheses, Bilan quotidien, Livraisons.
-- CSV du bilan ; JSON complet du scénario (pas du résultat Monte-Carlo).
-- Toute modification invalide les anciens rapports et simulations.
-- Restauration JSON : remplace seulement l'espace sélectionné, avec accord.
-- Les champs texte sont échappés pour le HTML/PDF. Les cellules Excel sont
-  écrites comme texte, non comme formules ; le CSV protège les préfixes de
-  formules avec une apostrophe. Aucune formule reçue n'est exécutée.
+Les dates de visite vont du début de campagne à la date courante. Une correction
+modifie la visite sélectionnée ; une nouvelle visite conserve l'historique.
+Une visite identique au même logement et à la même date est refusée ; modifier
+la visite existante. À date égale, l'ordre d'enregistrement départage les visites.
+La suppression d'un logement, explicitement confirmée, retire aussi visites,
+photos et interventions liées. Les anciennes sauvegardes restent indépendantes.
 
-METHODE ET TESTS
-- Formules, hypothèses, limites et exemples de vérification dans l'app.
-
-5. Formules et unités
----------------------
-N = nombre d'occupants ; q = consommation par personne, en L/pers./jour.
-C = capacité ; V0 = stock au début du jour ; A = livraison du jour, en L.
-
-    Demande D = N x q
-    Débordement B = max(V0 + A - C, 0)
-    Disponible U = min(C, V0 + A)
-    Eau servie E = min(D, U)
-    Manque M = D - E
-    Stock final V1 = U - E
-
-Deux identités à vérifier :
-    V0 + A = V1 + E + B
-    D = E + M
-
-Le stock final devient le stock de début du jour suivant. Le manque n'est
-pas reporté au lendemain. La livraison précède la consommation : elle peut
-déborder alors que la consommation prévue aurait libéré de la place plus
-tard dans la journée. Le modèle ne suit pas les heures.
-
-Autonomie sans apport = volume INITIAL / demande quotidienne constante.
-Il s'agit d'une durée théorique fractionnaire, non de la date exacte d'une
-panne. Pour une demande nulle, le modèle ne prévoit pas d'épuisement.
-Le seuil d'alerte est strict : stock final < capacité x seuil / 100.
-Ce seuil est un choix utilisateur, pas une valeur réglementaire.
-
-6. Modèle probabiliste
------------------------
-Pour chaque trajectoire et chaque jour, tirer q dans une loi triangulaire :
-minimum a, valeur habituelle m (mode), maximum b, avec 0 <= a <= m <= b.
-Si a = m = b, la consommation est constante, sans erreur de calcul.
-Moyenne théorique : (a + m + b) / 3. Le mode n'est pas toujours la moyenne.
-Un tirage représente la consommation moyenne par personne du bâtiment ce
-jour-là, multipliée par N. Il ne représente PAS N tirages indépendants.
-Les jours et les trajectoires sont supposés indépendants.
-Les livraisons, les occupants et la capacité ne sont pas aléatoires.
-
-Pf = nombre de trajectoires avec au moins un manque / nombre de trajectoires.
-Taux de service journalier = nombre de journées avec demande entièrement
-satisfaite / nombre total de journées simulées. Ce n'est PAS 1 - Pf.
-
-Un intervalle binomial exact à 95 % accompagne Pf, même pour 0 % ou 100 %.
-Il décrit l'erreur Monte-Carlo, pas l'incertitude sur les hypothèses ou les
-livraisons. Une probabilité simulée n'est pas une fréquence observée.
-La bande Q05-Q95 est ponctuelle par jour, pas une enveloppe garantissant
-90 % des trajectoires complètes. Une graine identique et des paramètres
-identiques reproduisent les résultats avec les versions testées.
-CSV : premier_jour_manque vide signifie aucun manque dans l'horizon.
-Les volumes CSV ont 6 décimales ; l'interface peut afficher des arrondis.
-
-7. Tests de prise en main (toutes données fictives)
---------------------------------------------------
-Test A : cliquer sur Charger l'exemple fictif, sans ajouter de livraison.
-Capacité = initial = 3 000 L ; N=10 ; q=50 ; durée=14 jours.
-Attendus : demande 500 L/j, autonomie 6 jours ; stocks J1=2 500, J2=2 000,
-J3=1 500, J4=1 000, J5=500, J6=0, J7=0. La journée J6 est entièrement
-servie. Le premier manque est J7. Six journées couvertes, huit avec manque.
-Demande totale 7 000 L ; servie 3 000 L ; manque 4 000 L ; débordement 0.
-Avec seuil 20 % (=600 L), la première fin de jour sous seuil est J5.
-
-Test B : exemple + livraison de 1 000 L au début de J3.
-J3 commence à 2 000 L, reçoit 1 000 L, sert 500 L et finit à 2 500 L.
-Premier manque J9, huit journées couvertes, manque total 3 000 L, débordement 0.
-
-Test C : réinitialiser l'exemple, livrer 1 000 L au début de J1.
-Cuve pleine : débordement 1 000 L, eau servie 500 L, fin J1=2 500 L.
-Premier manque reste J7. La livraison n'a pas accru le stock utile.
-
-Test D : exemple sans livraison ; comparer cuves pleines 3 000/5 000/7 000 L,
-mode Même taux de remplissage.
-Journées couvertes : 6/10/14. Premiers manques : J7/J11/aucun sur 14 jours.
-Manques cumulés : 4 000/2 000/0 L. Toutes finissent à zéro.
-Mode Même volume initial : les trois commencent à 3 000 L ; sans apport,
-les trajectoires sont identiques (premier manque J7).
-
-Test E : exemple sans apport ; Mon scénario : minimum=habituelle=maximum=50.
-Simuler 10 000 trajectoires, graine42. Toutes donnent premier manque J7,
-manque4 000 L et fin0. Pf=100 %. Journées entièrement servies=6/14=42,857 %.
-L'intervalle exact n'est pas [100 %, 100 %], même avec des tirages constants.
-Le modèle étant déterministe dans ce cas, sa probabilité est connue exactement ;
-l'intervalle affiché est l'intervalle binomial générique du compteur.
-
-Test F : exemple sans apport ; Réapprovisionnements, première J4, intervalle3,
-volume1 500 L. Évaluer puis appliquer.
-Livraisons J4,J7,J10,J13 : 6 000 L apportés, 7 000 L servis ; aucun manque,
-aucun débordement ; volume final2 000 L. Le plan ancien est remplacé.
-
-Test probabiliste non constant : reprendre l'exemple, réduire la durée à
-6 jours, conserver minimum40, habituelle50, maximum60 ; 10 000 tirages,
-graine42. Dans l'environnement testé : risque d'au moins un manque50,27 %,
-intervalle exact à95 % environ[49,285 % ; 51,255 %], journées entièrement
-servies91,622 %. Le risque concerne principalement J6 ; les cinq premières
-journées restent couvertes avec ces bornes. Les arrondis peuvent varier
-avec les versions des bibliothèques. Il s'agit de scénarios simulés.
-
-Test G : refuser initial4 000 L dans une cuve3 000 L, ou minimum60 lorsque
-habituelle50. Les valeurs enregistrées doivent rester inchangées.
-Test H : après une saisie, changer de rubrique puis revenir ; les paramètres
-enregistrés restent présents. Changer d'espace n'écrase pas l'autre espace.
-Test I : exporter PDF/Excel/CSV/JSON ; comparer le bilan des quatre fichiers.
-Restaurer le JSON dans l'espace souhaité après confirmation. Vérifier que
-l'autre espace reste inchangé. Les résultats Monte-Carlo doivent être relancés.
-
-CSV de livraison (UTF-8, séparateur point-virgule ou virgule) :
-
-    jour;volume_l
-    3;1000
-    6;1000
-
-Les jours doivent être dans l'horizon et les volumes strictement positifs.
-Les décimales utilisent un point. Colonnes supplémentaires refusées.
-Limites : 180 lignes, CSV1Mo, JSON100Ko, volumes10 000 000 L,
-10 000 occupants, consommation1 000 L/pers./j, durée180 jours.
-
-8. Limites et portée
---------------------
-Outil de compréhension et de comparaison, pas une validation professionnelle.
-Aucune norme ni consommation locale n'est supposée. Les valeurs par défaut
-sont fictives. Pas de bilan horaire, de pression, de pompe, de pertes par
-fuite ou évaporation, de traitement d'eau ou de volume incendie réservé.
-Pas d'étude de potabilité, de dimensionnement réglementaire ou de prévision
-garantie. Si les livraisons sont tardives ou corrélées à la demande, le modèle
-doit être adapté avant toute interprétation hors d'un devoir pédagogique.
-L'application ne déduit jamais une conformité réelle d'une probabilité.
-
-9. GitHub et Streamlit Community Cloud
+4. STATISTIQUES ET QUALITÉ DES DONNÉES
 --------------------------------------
-Le fichier local demandé est requirement.text : il n'est pas renommé ici.
-Streamlit Community Cloud attend le nom standard requirements.txt.
-Préparer une COPIE DE DEPLOIEMENT hors du dossier livré. Dans PowerShell,
-depuis le dossier reserveeau (adapter le chemin de destination si nécessaire) :
+Le registre distingue logements et visites. Chaque fréquence utilise la dernière
+visite DE CHAQUE LOGEMENT dans la période sélectionnée, pas toutes ses visites.
+Une rubrique manquante à la dernière visite n'est pas remplacée silencieusement
+par une observation ancienne. Les anciens constats restent dans l'historique.
 
-    $dest = Join-Path $HOME 'Documents\Codex\deploiements\reserveeau'
-    New-Item -ItemType Directory -Path $dest -Force
-    Copy-Item -LiteralPath .\app.py -Destination $dest
-    Copy-Item -LiteralPath .\README -Destination $dest
-    Copy-Item -LiteralPath .\requirement.text -Destination (Join-Path $dest 'requirements.txt')
-    Set-Location -LiteralPath $dest
+Pour une rubrique :
+  évalués = présents + absents
+  fréquence = présents / évalués
+Non observé et Information inconnue sont exclus du dénominateur et affichés.
+Si évalués=0, fréquence et intervalle restent non définis, pas 0 %.
+Les origines observée/déclarée/mesurée des défauts présents sont comptées séparément.
+Une cooccurrence de défauts n'est pas une preuve de causalité.
+Les fréquences de plusieurs rubriques ne s'additionnent pas en un risque global.
 
-Créer sur GitHub un dépôt reserveeau, vide si utilisation des commandes
-suivantes. Dans la copie de déploiement uniquement :
+Les quatre indicateurs du bandeau décrivent l'ensemble du registre. Les tableaux
+et graphiques après les filtres décrivent la période et le quartier retenus.
+Les priorités de suivi prennent en compte les anciens signalements non résolus.
+Les statuts d'interventions sont ceux du registre ; aucune reconstitution complète
+d'un historique de changements de statut n'est promise.
 
-    git init
-    git add .
-    git commit -m "Premiere version de ReserveEau"
-    git branch -M main
-    git remote add origin https://github.com/VOTRE_COMPTE/reserveeau.git
-    git remote -v
-    git push -u origin main
+Méthode de recrutement déclarée : convenance, tirage aléatoire ou recensement.
+Le choix d'une méthode dans le formulaire ne prouve pas sa mise en oeuvre.
+Les intervalles Wilson 95 % sont un exercice sous modèle binomial : ils supposent
+des observations suffisamment indépendantes et représentatives et ne corrigent
+ni sélection de volontaires, ni non-réponse, ni erreurs de collecte.
+Ils ne représentent pas une incertitude de recensement exhaustif.
+Les colonnes IC95 du classeur sont mathématiques ; lire l'onglet Methode.
 
-Remplacer VOTRE_COMPTE par le véritable compte. Si origin existe déjà,
-vérifier sa destination puis utiliser git remote set-url origin URL_DU_DEPOT.
-Ne pas initialiser le dépôt parent contenant toutes les autres applications.
-On peut aussi téléverser app.py, requirements.txt et README directement
-dans un dépôt via l'interface GitHub.
+5. ORIENTATION DES BESOINS ET SUIVI
+-----------------------------------
+Règle pédagogique expliquée, sans score opaque :
+  1. Signalement préoccupant non clôturé : Visite technique à prioriser.
+  2. Sinon, défaut présent d'impact d'usage >=2 : Réhabilitation à programmer.
+  3. Sinon, défaut présent : Entretien à organiser.
+  4. Sans défaut consigné et rubriques manquantes : Informations à compléter.
+  5. Cinq rubriques évaluées sans défaut : Surveillance courante sur ces rubriques.
+Les manquants sont signalés même si une autre rubrique suffit à proposer une orientation.
+Ce ne sont pas des seuils réglementaires ou un diagnostic du bâtiment.
+La comparaison seuil 2/seuil 3 montre les classements sensibles à cette convention.
+Un signalement préoccupant reste prioritaire dans les deux règles.
 
-Dans Streamlit Community Cloud : créer une app, choisir le dépôt, main,
-et le fichier d'entrée app.py. Si Paste URL est proposé, fournir l'URL DU
-FICHIER, par exemple :
-https://github.com/VOTRE_COMPTE/reserveeau/blob/main/app.py
-et non uniquement celle du dépôt. Choisir une version Python compatible.
-Aucun secret ni fichier de base de données n'est à configurer.
-Consulter les journaux si une bibliothèque manque : vérifier le nom exact
-requirements.txt et sa présence dans la branche réellement déployée.
-Le lien public est fourni après déploiement ; aucun lien n'est inventé ici.
+Une intervention relie un logement, une visite précise et une rubrique, avec :
+action, cause supposée, vérifications nécessaires, date cible et étape de suivi.
+Étapes : Signalé > Visite réalisée > Intervention proposée > Travaux réalisés >
+Résultat vérifié. Le passage d'une étape à l'autre est une déclaration utilisateur.
+Travaux réalisés exige une date réelle. Résultat vérifié exige date, conclusion,
+note et source ; la date ne peut précéder la visite ou les travaux renseignés.
 
-Après modification : mettre à jour les fichiers de la copie de déploiement,
-puis, dans cette copie :
+Un ancien signalement préoccupant ne disparaît pas si une visite récente ne
+réévalue pas la rubrique. Il est clôturé uniquement par une intervention liée à
+cette VISITE et cette RUBRIQUE, avec Résultat vérifié et la conclusion
+« Résolution constatée sur l'aspect suivi ». Une amélioration ou un problème
+persistant ne suffisent pas à le clôturer. Les autres signalements restent ouverts.
+Une conclusion d'inspection peut être consignée sans travaux, avec sa source.
 
-    git status
-    git add .
-    git commit -m "Mise a jour de ReserveEau"
-    git push
+6. SCÉNARIO BUDGÉTAIRE
+-----------------------
+Choisir explicitement les interventions à inclure. Les interventions au stade
+Travaux réalisés ou Résultat vérifié sont exclues des dépenses futures.
+Une estimation absente reste NON CHIFFRÉE, pas égale à zéro.
+Coûts et fourchettes saisis par l'utilisateur avec source ; aucune base de prix
+du marché n'est fournie. Tous les montants sont en FCFA.
+  Fixe : valeur centrale seule, bornes alignées automatiquement.
+  Uniforme : minimum/maximum ; centrale recalculée au milieu.
+  Triangulaire : minimum/mode/maximum ; moyenne=(min+mode+max)/3.
+Les coûts sont supposés indépendants ; aucune inflation ou corrélation implicite.
 
-Ne pas conserver deux noms différents pour le même fichier Python dans
-le dépôt. Refaire les tests avant d'envoyer. Le dossier original reste avec
-exactement les trois fichiers demandés.
+1000, 10000, 50000 ou 100000 tirages, graine explicite. Le scénario calcule
+le sous-total des interventions sélectionnées ET chiffrées, puis
+P(sous-total <= budget). Les interventions inconnues et non sélectionnées sont
+exclues et le nombre d'inconnues sélectionnées est affiché.
+Ce n'est pas la probabilité de couvrir tous les besoins de réhabilitation.
+P05/P95 décrivent le modèle, pas un intervalle de confiance d'un coût réel.
+Le CSV contient tous les tirages ; le JSON budgétaire conserve leurs hypothèses.
+La sauvegarde principale n'inclut pas les résultats ; ils se recalculent.
 
-10. Vérification de livraison (23 octobre 2026)
------------------------------
-Les tests, captures et archives sont placés hors du dossier livré.
-Le bilan conserve les masses ; les livraisons sont appliquées avant la demande.
-Les contrôles de bornes et de données non finies sont côté Python également.
-46 tests automatisés réussis : calculs, validation, import, simulation,
-conservation des volumes, navigation, formulaires et exports.
-Parcours navigateur vérifiés à1440,768,390 et320 pixels : niveaux de cuve,
-changement d'espace, paramètres, comparaison, simulation, ajout de livraison,
-plan régulier, téléchargement PDF/Excel/CSV/JSON et restauration JSON.
-PDF standard2pages et cas long180jours7pages rendus puis contrôlés visuellement.
-Exports téléchargés relus : mêmes résultats que les calculs, 3feuilles Excel,
-10 000 lignes de simulation et scénario JSON cohérent.
-Test de charge : 20 000 trajectoires sur180jours, résultats finis sans erreur.
-Environnement testé : Python3.14, Streamlit1.65.0, NumPy2.5.3, pandas3.0.6,
-Plotly7.1.0, SciPy1.18.1, ReportLab4.5.1 et openpyxl3.1.5.
-Un avertissement de permissions Windows peut apparaître au nettoyage des
-dossiers temporaires du lanceur de tests après OK ; les tests réussissent,
-et le serveur de l'application ne présente pas cette erreur.
-La compatibilité n'a pas été exécutée sur tous les navigateurs ou versions
-de Python : tests de rendu effectués avec Edge/Chromium sur Windows.
-Le déploiement sur un compte GitHub/Cloud, qui nécessite son propriétaire,
-reste à effectuer. Une validation réglementaire ou professionnelle n'a pas
-été réalisée et n'est pas l'objet de cet outil.
+7. PHOTOGRAPHIES, CARTE ET IMPORTS
+----------------------------------
+Photos : JPEG/PNG <=5 Mo et <=20 mégapixels. Orientation EXIF appliquée, conversion
+JPEG, retrait des métadonnées EXIF, réduction <=1200 px et <=180 ko environ.
+Deux photos par visite, quarante par enquête. Légende et accord requis.
+La caméra dépend des permissions et capacités du navigateur ; l'import est une
+alternative. Les images sont conservées en base64 dans le JSON de session.
+La comparaison des deux dernières visites ne déduit pas automatiquement une réparation.
 
-Sources officielles pour le déploiement :
-https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/app-dependencies
-https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy
+Carte : point du quartier, arrondi à 0,01 degré et documenté ; aucune position
+de logement. Affichage seulement si >=5 logements visités dans le groupe retenu.
+Seuls les points de quartiers et effectifs sont transmis au composant carte.
+Cette réduction de précision ne garantit pas, à elle seule, l'anonymat.
+Les fonds cartographiques peuvent ne pas charger sans connexion ; tableau disponible.
+Un graphique de repères relatifs, numérotés et arrondis, reste disponible sans
+fond cartographique externe. Il ne représente pas les limites administratives ou
+les rues. La carte en ligne est facultative et son zoom dépend de l'étendue des points.
+
+Import d'une visite : CSV UTF-8 séparé par ; ou XLSX onglet Constats, <=1 Mo.
+Exactement cinq lignes, une par code : murs,toiture,humidite,sols,assainissement.
+Colonnes exactes du modèle :
+  rubrique;etat;origine;intensite;etendue;notes;preoccupant;motif_preoccupation
+preoccupant : true/false, 1/0 ou vrai/faux. Libellés français des autres choix
+identiques au modèle de l'application. Description obligatoire pour un défaut présent.
+Le logement, la date, l'enquêteur et le besoin exprimé sont saisis dans l'interface.
+L'import ajoute une visite après aperçu/confirmation, sans application partielle.
+Le CSV détaillé des constats de toute l'enquête a plus de colonnes et n'est pas
+ce modèle d'import d'une seule visite.
+
+8. RAPPORTS, SAUVEGARDE ET LIMITES
+---------------------------------
+Rapport agrégé PDF : registre entier, statistiques, priorités et quartiers regroupés
+si moins de cinq logements ; pas de fiche, ID de logement, photo ou point de carte.
+Statistiques CSV : chiffres et dénominateurs du registre entier.
+Ces exports de Rapports ne reprennent pas les filtres du tableau de bord.
+Le CSV téléchargeable du tableau de bord reprend ses filtres.
+
+Fiche PDF détaillée : logement choisi, trois dernières visites au maximum,
+besoins, interventions et, uniquement si demandé, photos autorisées de ces visites.
+Le classeur Excel détaillé contient sept feuilles : Logements, Visites, Constats,
+Interventions, Statistiques, Quartiers, Methode. Les photos n'y sont pas embarquées.
+JSON complet : quartiers, logements, visites, interventions et photos ; <=12 Mo.
+Les champs inattendus, adresses ajoutées hors schéma et images non normalisées
+sont refusés à la restauration. Le logiciel ne garantit pas qu'un texte libre
+ou une photographie saisie par l'utilisateur ne contienne aucune information identifiante.
+
+Restaurer remplace l'espace fictif ou personnel correspondant après confirmation,
+en conservant l'autre espace. Sauvegarder avant de remplacer une étude.
+Les anciennes versions de fichiers exportés ne sont pas effacées automatiquement.
+Cellules Excel textuelles forcées en texte ; CSV neutralise les préfixes de formule.
+Pas de synchronisation entre enquêteurs, de stockage durable en ligne, d'authentification
+ou de collecte hors connexion dans cette première version de démonstration.
+Pour une enquête réelle partagée, prévoir les accès, accords et stockage appropriés.
+
+Limites : 40 quartiers, 200 logements, 500 visites, 500 interventions, 40 photos.
+Les corrections modifient l'enregistrement sélectionné ; il n'existe pas de journal
+immuable des modifications. Les anciennes visites distinctes sont conservées.
+La source d'une vérification est déclarée, sans validation des qualifications
+de l'intervenant par le logiciel. Les causes techniques et prescriptions de travaux
+restent à examiner par les personnes compétentes, en lien avec les occupantes.
+
+9. EXEMPLES DE TEST VÉRIFIABLES
+-------------------------------
+Exemple fictif : 30 logements, 32 visites, trois quartiers de dix logements.
+Deux visites anciennes supplémentaires ne changent pas les 30 unités statistiques.
+Toiture : 12 Présent, 8 Absent, 5 Non observé, 5 Information inconnue.
+  Évalués=20 ; fréquence=12/20=60 %. Les dix manquants sont visibles.
+  Wilson 95 % mathématique environ 38,66 à 78,12 %, sous modèle binomial.
+HE-0008 : signalement préoccupant fictif aux murs, orientation technique prioritaire.
+  Une nouvelle visite Non observé ne clôture pas le signalement.
+  Travaux réalisés ne le clôture pas non plus.
+  Une vérification documentée de résolution liée à la bonne visite/rubrique le clôture.
+
+Budget fictif : intervention A uniforme [100000 ;200000], B fixe 100000.
+  Sous-total min=200000, max=300000, moyenne=250000 FCFA.
+  P05=205000, médiane=250000, P95=295000.
+  P(sous-total<=250000)=50 % théoriquement.
+  À 10000 tirages : variation d'environ ±0,98 point dans 95 % des répétitions,
+  pas une garantie par graine. Ajouter une intervention non chiffrée sélectionnée
+  doit afficher un inconnu et conserver la probabilité du seul sous-total connu.
+
+Créer un logement personnel et une visite incomplète, exporter puis restaurer
+le JSON : fiche et constats doivent rester identiques. L'espace fictif est conservé.
+Photo sans accord, défaut présent sans description, coût incohérent, doublon de
+visite identique ou faux format d'import : action refusée sans écrasement partiel.
+
+10. GITHUB ET STREAMLIT COMMUNITY CLOUD
+---------------------------------------
+Conserver requirement.text dans le dossier livré. Community Cloud attend le nom
+standard requirements.txt : préparer une COPIE DISTINCTE pour le déploiement.
+Dans cette copie :
+  Copy-Item -LiteralPath requirement.text -Destination requirements.txt
+Publier app.py, requirements.txt et README. Ne pas publier les sauvegardes ou
+exports détaillés d'une enquête réelle dans le dépôt.
+
+Créer un dépôt habitat-elles sur votre compte GitHub, puis Add file > Upload files,
+ou utiliser le terminal de VS Code dans le dossier de déploiement :
+  git init
+  git add app.py requirements.txt README
+  git commit -m "Premiere version Habitat Elles"
+  git branch -M main
+  git remote add origin https://github.com/VOTRE_COMPTE/habitat-elles.git
+  git push -u origin main
+Si origin existe, contrôler git remote -v avant de corriger si nécessaire :
+  git remote set-url origin https://github.com/VOTRE_COMPTE/habitat-elles.git
+
+Community Cloud : Create app, dépôt habitat-elles, branche main, fichier app.py.
+Paste URL : https://github.com/VOTRE_COMPTE/habitat-elles/blob/main/app.py
+Choisir une version Python compatible proposée, puis examiner les journaux.
+Partager l'URL .streamlit.app ; localhost fonctionne seulement sur votre ordinateur.
+La démonstration publique doit rester fondée sur les données fictives et sur les
+exports agrégés adaptés. Aucun dépôt ou déploiement public créé automatiquement ici.
+Mettre à jour dans la copie :
+  git status
+  git add app.py requirements.txt README
+  git commit -m "Amelioration Habitat Elles"
+  git push
+
+11. RÉFÉRENCES ET VÉRIFICATIONS
+--------------------------------
+Références de méthode consultées pour la conception (30/10/2026) :
+  https://www.who.int/publications/i/item/9789241550376
+  https://www.who.int/europe/publications/i/item/9789289041683
+  https://docs.streamlit.io/develop/concepts/architecture/architecture
+  https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/app-dependencies
+Pas de normes, prix locaux ou données de terrain réelles préchargés.
+
+Vérifications réellement effectuées le 30/10/2026 :
+  - installation des bibliothèques et lancement local sur le port 8545 ;
+  - 25 tests automatisés réussis : dénominateurs et dernières visites, manquants,
+    priorités, signalements historiques et clôture documentée, données invalides,
+    image sans EXIF, import atomique, coûts, budget, sauvegarde, PDF/Excel et interface ;
+  - parcours complet dans Microsoft Edge à 1440 et 390 pixels : nouvelle visite,
+    maintien d'un signalement après travaux, vérification documentée, photo fictive
+    autorisée, scénario à 100000 tirages, exports, import de constats, restauration
+    exacte et création d'un quartier/logement/visite dans l'espace personnel séparé ;
+  - six rubriques contrôlées visuellement aux largeurs 768 et 320 pixels ;
+  - contrôle des repères de quartiers à 320 pixels, avec et sans fond externe ;
+  - contrôle de l'absence de débordement horizontal de page et de texte coupé dans
+    les titres, cartes et boutons examinés ;
+  - vérification des fichiers téléchargés : sept feuilles Excel, 33 visites et
+    165 constats dans le scénario modifié de test, une photo normalisée, JSON
+    restauré à l'identique et 100000 montants budgétaires ;
+  - vérification que le PDF agrégé n'inclut pas les ID de logement ni la légende
+    de la photo test, contrairement à la fiche détaillée explicitement demandée ;
+  - rapports PDF de deux pages rendus en images et inspectés : tableaux, photo,
+    accents, titres de visite, marges et pagination lisibles sans chevauchement constaté.
+
+Résultat du scénario budgétaire fictif à 100000 tirages, graine 42 :
+  P(sous-total<=250000 FCFA)=49,743 %, proche de 50 % théoriques.
+Les chiffres modifiés des parcours de test restent hors du dossier livré :
+l'application démarre avec les 30 logements et 32 visites fictifs d'origine.
+
+Restent à réaliser : essai de la caméra sur un véritable téléphone et de ses
+permissions, fonctionnement tactile en conditions de terrain, déploiement public,
+organisation d'une collecte réelle partagée et validation des accès/accords/stockage.
+Le fond de carte externe ne s'est pas chargé dans l'environnement de test ; les
+points et le graphique de repères indépendants sont restés disponibles.
+Les autres versions autorisées par les dépendances n'ont pas toutes été testées.
+Aucun dépôt GitHub ni hébergement public créé lors de cette livraison.
